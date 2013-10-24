@@ -1,11 +1,8 @@
 #include "portwork.cpp"
 #include <avr/io.h>
-void set0Bduty(uint8_t duty){
-    OCR0B = duty;
-}
-uint8_t get0Bduty(){
-    return OCR0B;
-}
+
+#define set0Bduty(duty) (OCR0B = duty)
+#define get0Bduty() OCR0B
 void enable0BPWM(){
     //Setting Direction of PORTD5 to output
     set_bit(DDRD, 5);

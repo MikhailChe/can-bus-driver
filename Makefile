@@ -22,3 +22,4 @@ all: $(PRG).elf
 
 $(PRG).elf:
 	$(CC) $(CFLAGS) -o bin/$@ $(LIBS)
+	avr-size bin/$@

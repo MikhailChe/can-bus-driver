@@ -5,4 +5,6 @@
 #define clear_bit(port,mask) ((port) &= ~(1 << mask))
 #define switch_bit(port,mask) ((port) ^= (1 << mask))
 
+#define get_bit(port,mask) ((port >> mask)&1)
+
 #endif
