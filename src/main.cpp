@@ -7,8 +7,13 @@ Author: Mikhail Chernoskutov
 
 int main(void){
     enable0BPWM();
+    DDRB = 1;
+    PORTB = 0b10101010;
     while(1){
-        set0Bduty(get0Bduty()+1);
+        set0Bduty(get0Bduty()-1);
+        if(get0Bduty()<64){
+            set0Bduty(255);
+        }
         _delay_ms(10);
     }
 }

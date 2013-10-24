@@ -26,4 +26,6 @@ void enable0BPWM(){
     clear_bit(TCCR0B, CS02);
     clear_bit(TCCR0B, CS01);
     set_bit(TCCR0B, CS00);
+    
+    set0Bduty(255);
 }
