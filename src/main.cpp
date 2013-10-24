@@ -12,6 +12,11 @@ int main(void){
     PORTB = 0b10101010;
     while(1){
         set0Bduty(get0Bduty()-1);
+        if(get0Bduty()%2 == 0){
+            PORTB = 0b01010101;
+        }else{
+            PORTB = 0b10101010;
+        }
         if(get0Bduty()<64){
             set0Bduty(255);
         }
