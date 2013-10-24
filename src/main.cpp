@@ -20,7 +20,7 @@ int main(void){
         if(get0Bduty()<64){
             set0Bduty(255);
         }
-        _delay_ms(10);
+        _delay_ms(100);
     }
 }
 

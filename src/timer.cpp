@@ -9,6 +9,7 @@ uint8_t get0Bduty(){
 void enable0BPWM(){
     //Setting Direction of PORTD5 to output
     set_bit(DDRD, 5);
+    set_bit(PORTD, 5);
     
     // Connecting timer output to PORTD5 in Clear on Compare match mode
     set_bit(DDRB, COM0B1);
