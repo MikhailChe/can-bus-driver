@@ -12,7 +12,7 @@ void enable0BPWM(){
     set_bit(PORTD, 5);
     
     // Connecting timer output to PORTD5 in Clear on Compare match mode
-    set_bit(DDRB, COM0B1);
+    set_bit(TCCR0A, COM0B1);
     clear_bit(TCCR0A, COM0B0);
     
     // Enable fast-PWM TOP = 0xFF
