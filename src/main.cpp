@@ -17,10 +17,10 @@ int main(void){
         }else{
             PORTB = 0b10101010;
         }
-        if(get0Bduty()<64){
+        if(get0Bduty()<1){
             set0Bduty(255);
         }
-        _delay_ms(100);
+        _delay_ms(25);
     }
 }
 
