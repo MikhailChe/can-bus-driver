@@ -8,7 +8,7 @@ MCU_TARGET     = attiny2313
 OPTIMIZE       = -Os
 
 DEFS           =
-LIBS           = ./src/main.cpp
+LIBS           = ./src/main.c
 
 # You should not have to change anything below here.
 
@@ -17,9 +17,9 @@ CC             = avr-gcc
 # Override is only needed by avr-lib build system.
 
 override CFLAGS        = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS)
-#override LDFLAGS       = -Wl,-Map,$(PRG).map
+override LDFLAGS       = #-Wl,-Map,bin/$(PRG).map
 all: $(PRG).elf
 
 $(PRG).elf:
-	$(CC) $(CFLAGS) -o bin/$@ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o bin/$@ $(LIBS)
 	avr-size bin/$@
