@@ -18,7 +18,7 @@ int main(void){
         if(get0Bduty() == 0){
             direction = 1;
         }
-        _delay_ms(1);
+        _delay_ms(20);
     }
 }
 
