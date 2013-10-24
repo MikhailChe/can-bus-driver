@@ -9,7 +9,6 @@ int main(void){
     enable0BPWM();
     DDRB = 0;
     PORTB = 0b11111111;
-    int value = 0;
     int direction = 1;
     while(1){
         set0Bduty(get0Bduty()+direction);
