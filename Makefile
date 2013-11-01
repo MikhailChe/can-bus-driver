@@ -23,3 +23,5 @@ all: $(PRG).elf
 $(PRG).elf:
 	$(CC) $(CFLAGS) $(LDFLAGS) -o bin/$@ $(LIBS)
 	avr-size bin/$@
+clean:
+	rm -rf ./bin/$(PRG).elf
