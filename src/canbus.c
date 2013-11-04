@@ -1,8 +1,16 @@
 #include <avr/io.h>
 #include "portwork.c"
 #include <stdbool.h>
+#include "canbus.h"
 
-
+/* ATMEGA16M1 high level wrapper functions
+ * You can find updated version at https://github.com/MikhailChe/can-bus-driver
+ * 
+ * Source code can be distributed under MIT license, which means that
+ * you can use it wherever and however you want until you remain copyrights
+ *
+ * Copyright 2013, Mikhail Chernoskutov
+ */
 
 /**CANGCON -- CAN General Control Register **/
 // 0 - no request
@@ -103,7 +111,7 @@ bool isEnabled(){
 // BusOffMode gives the information of the state of the CAN channel.
 // Only entering in "bus off" mode generated the BOFFIT interrupt
 bool isBusOffMode(){
-    return get_bit(CANGSTA, BOFF;
+    return get_bit(CANGSTA, BOFF);
 }
 
 // ErrorPassiveMode gives information of the state of the CAN channel.
@@ -112,4 +120,298 @@ bool isErrorPassiveMode(){
 }
 
 /** CANGIT - CAN General Interrupt Register **/
+
+// 0 - no interrupt
+// 1 - CAN interrupt: image of all the CAN controller interrputs except of OVRTIM interrupt.
+//  This bit can be used for polling method
+bool isCANGeneralInterruptFlag(){
+    return get_bit(CANGIT, CANIT);
+}
+
+// Writing a logical one value resets this interrupt flag. BOFFIT flag is only set
+// when the CAN enters in bus off mode (coming from error passive mode)
+// 0 - no interrupt
+// 1 - bus off interrupt when the CAN enters in bus off mode
+void setBusOffInterrupt(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIT, BOFFIT);
+    }else{
+        clear_bit(CANGIT, BOFFIT);
+    }
+}
+
+// Writing a logical one resets this interrupt flag.
+// Entering in CAN timer overrun interrupt handler also reset the interrupt flag.
+// 0 - no interrupt
+// 1 - CAN timer overrun interrupt: set when the CAN timer switches from 0xFFFF to 0
+void setOverrunCANTimer(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIT, OVRTIM);
+    }else{
+        clear_bit(CANGIT, OVRTIM);
+    }
+}
+
+//Writing a logical one resets this interrupt flag. BXOK flag can be cleared only if all CONMOB 
+//fields of the MOb’s of the buffer have been re-written before.
+// 0 - no interrupt
+// 1 - burst receive interrupt: set when the frame buffer receive is completed
+void setFrameBufferRecieveInterrupt(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIT, BXOK);
+    }else{
+        clear_bit(CANGIT, BXOK);
+    }
+}
+
+//Writing a logical one resets this interrupt flag.
+// 0 - no interrupt
+// 1 - stuff error interrupt: detection of more than 5 consecutive bits with the same polarity
+void setStuffErrorGeneral(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIT, SERG);
+    }else{
+        clear_bit(CANGIT, SERG);
+    }
+}
+
+//Writing a logical one resets this interrupt flag.
+// 0 - no interrupt
+// 1 - CRC error interrupt: the CRC check on destuffed message does not fit with the CRC field
+void setCRCErrorGeneral(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIT, CERG);
+    }else{
+        clear_bit(CANGIT, CERG);
+    }
+}
+
+//Writing a logical one resets this interrupt flag.
+// 0 - no interrupt
+// 1 - form error interrupt: one or more violations of the fixed form in the CRC delimiter,
+// acknowledgment delimiter or EOF
+void setFormErrorGeneral(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIT, FERG);
+    }else{
+        clear_bit(CANGIT, FERG);
+    }
+}
+
+//Writing a logical one resets this interrupt flag.
+// 0 - no interrupt
+// 1 - acknowledgment error interrupt: no detection of the dominant bit in acknowledge slot
+void setAcknowledgmentErrorGeneral(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIT, AERG);
+    }else{
+        clear_bit(CANGIT, AERG);
+    }
+}
+
+/** CANGIE  - CAN General Interrupt Enable Register **/
+// Enables all CAN Interrupts except for CAN Timer Overrun Interrupt
+void setEnableAllCANInterrupts(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIE, ENIT);
+    }else{
+        clear_bit(CANGIE, ENIT);
+    }
+}
+
+// Enables Bus-Off Interrupt
+void setEnableBusOffInterrupt(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIE, ENBOFF);
+    }else{
+        clear_bit(CANGIE, ENBOFF);
+    }
+}
+
+// Enable Recieve Interrupt
+void setEnableRecieveInterrupt(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIE, ENRX);
+    }else{
+        clear_bit(CANGIE, ENRX);
+    }
+}
+
+// Enable Transmit Interrupt
+void setEnableTransmitInterrupt(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIE, ENTX);
+    }else{
+        clear_bit(CANGIE, ENTX);
+    }
+}
+
+// Enable MOb Errors Interrupt
+void setEnableMObErrorsInterrupt(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIE, ENERR);
+    }else{
+        clear_bit(CANGIE, ENERR);
+    }
+}
+
+// Enable Frame Buffer Interrupt
+void setEnableFrameBufferInterrupt(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIE, ENBX);
+    }else{
+        clear_bit(CANGIE, ENBX);
+    }
+}
+
+// Enable General Errors Interrupt
+void setEnableGeneralErrorsInterrupt(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIE, ENERG);
+    }else{
+        clear_bit(CANGIE, ENERG);
+    }
+}
+
+// Enable CAN Timer Overrun Interrupt
+void setEnableCANTimerOverrunInterrupt(bool isTrue){
+    if(isTrue){
+        set_bit(CANGIE, ENOVRT);
+    }else{
+        clear_bit(CANGIE, ENOVRT);
+    }
+}
+
+
+#define N_OF_MObs 5
+/** CANEN2 and CANEN1 - CAN Enable MOb Registers **/
+
+// ATmega16M1 /32M1 /64M1 have only six MOb's
+// 0 - message object disabled: MOb available for a new transmission or reception
+// 1 - message object enabled: MOb in use
+bool isMobEnalbed(uint8_t index){
+    if(index >= N_OF_MObs){
+        return false;
+    }else{
+        return get_bit(CANEN2, index);
+    }
+}
+
+/** CANIE2 and CANIE1 - CAN Enable Interrupt MOb Registers **/
+void setEnableMObInterrupt(uint8_t index, bool value){
+    if(index >= N_OF_MObs){
+        return;
+    }
+    if(value){
+        set_bit(CANIE2, index);
+    }else{
+        clear_bit(CANIE2, index);
+    }
+}
+
+/** CANSIT2 and CANSIT1 - CAN Status Interrupt MOb Registers **/
+void setEnableMObStatusInterrupt(uint8_t index, bool value){
+    if(index >= N_OF_MObs){
+        return;
+    }
+    if(value){
+        set_bit(CANSIT2, index);
+    }else{
+        clear_bit(CANSIT2, index);
+    }
+}
+
+/** CANBT1 - CAN bit Timing Register 1 **/
+
+//6-bit prescaler
+void setBaudRatePrescaler(uint8_t prescaler){
+    prescaler = prescaler & 0b111111;
+    CANBT1 = (prescaler << BRP0);
+    if(prescaler == 0){
+        setSamplePoint(false);
+    }
+}
+
+uint8_t getBaudRatePrescaler(){
+    return (CANBT1 >> BRP0)&0b111111;
+}
+
+/** CANBT2 - CAN bit Timing Register 2 **/
+void setResyncJumpWidth(uint8_t val){
+    set_bits(CANBT2, 0b11, SJW0, val);
+}
+
+void setPropagationTimeSegment(uint8_t val){
+    set_bits(CANBT2, 0b111, PRS0, val);
+}
+
+
+/** CANBT3 - CAN bit Timing Register 3 **/
+
+//Phase Segment 2 shall always be >=1 and <= Phase Segment 1
+// T(phs2) = T(scl) * (PHS2 + 1);
+// This phase is used to compensate for phase edge errors.
+// This segment may be shortened by the re-synchronization jump width
+void setPhaseSegment2(uint8_t val){
+    set_bits(CANBT3, 0b111, PHS20, val);
+}
+
+// This phase is used to compensate for phase edge errors.
+// This segment may be lengthened by the re-synchronization jump width
+// T(phs1) = T(scl) * (PHS1 +1);
+void setPhaseSegment1(uint8_t val){
+    set_bits(CANBT3, 0b111, PHS10, val);
+}
+
+void setSamplePoint(bool val){
+    if(val){
+        set_bit(CANBT3, SMP);
+        if(getBaudRatePrescaler() == 0){
+            setBaudRatePrescaler(1);
+        }
+    }else{
+        clear_bit(CANBT3, SMP);
+    }
+}
+
+/** CANTCON - CAN Timer Control Register **/
+
+// Prescaler for the CAN timer upper counter range 0 to 255.
+// It provides the clock to the CAN timer if the CAN controller is enabled
+// Tclk(CANTIM) = Tclk(IO) * 8 * (CANTCON +1)
+void setCanTimerPrescaler(uint8_t val){
+    CANTCON = val;
+}
+    
+uint8_t getCanTimerPrescaler(){
+    return CANTCON;
+}
+
+
+//TODO: check that shift to left works properly
+/** CANTIML and CANTIMH - CAN timer Registers (read-only) **/
+uint16_t getCanTimer(){
+    return ((CANTIMH << 8) | CANTIML);
+}
+
+/** CANTTCL and CANTTCH - CAN TTC Timer Registers (read-only) **/
+uint16_t getCanTTCTimer(){
+    return ((CANTTCH << 8) | CANTTCL);
+}
+
+/** CANTEC - CAN Transmit Error Counter Register **/
+uint8_t getTransmitErrorCount(){
+    return CANTEC;
+}
+
+/** CANREC - CAN Receive Error Counter Register **/
+uint8_t getReceiveErrorCount(){
+    return CANREC;
+}
+/** CANHPMOB - CAN Highest Priority MOb Register **/
+uint8_t getHighestPriorMObNumber(){
+    return (CANHPMOB >> HPMOB0)&0b1111;
+}
+
+/** CANPAGE - CAN Page MOb Register **/
 //TODO: continue on high-level wrapper
