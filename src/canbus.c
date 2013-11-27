@@ -414,4 +414,47 @@ uint8_t getHighestPriorMObNumber(){
 }
 
 /** CANPAGE - CAN Page MOb Register **/
+
+//Selection of the Mob number. Available are from 0 to 5
+void setMobNumber(uint8_t val){
+    if(val>=0 && val <=5){
+        set_bits(CANPAGE, 0b1111, MOBNB0, val);
+    }
+}
+
+uint8_t getMobNumber(){
+    return ((CANPAGE >> MOBNB0) & 0b1111);
+}
+
+// INVERTED!!
+// Auto Increment of the FIFO CAN Data Buffer Index (Active low)
+// 0 - auto increment of the index (which is default)
+// 1 - NO auto increment of the index
+void setAutoIncrement(bool val){
+    if(val){
+        set_bit(CANPAGE, AINC);
+    }else{
+        clear_bit(CANPAGE, AINC);
+    }
+}
+
+bool getAutoIncrement(){
+    return get_bit(CANPAGE, AINC);
+}
+
+// INDX - FIFO CAN Data Buffer index
+// Byte location of the CAN data byte into the FIFO for the defined MOb
+void setIndex(uint8_t val){
+    if(val>=0 && val <= 0b111){
+        set_bits(CANPAGE, 0b111, INDX0, val);
+    }
+}
+uint8_t getIndex(){
+    return ((CANPAGE>>INDX0) && 0b111);
+}
+
+/*|===============|***/
+/*| MOb registers |**/
+/*|===============|*/
+
 //TODO: continue on high-level wrapper
