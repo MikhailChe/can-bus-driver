@@ -453,8 +453,109 @@ uint8_t getIndex(){
     return ((CANPAGE>>INDX0) && 0b111);
 }
 
+
+
 /*|===============|***/
 /*| MOb registers |**/
 /*|===============|*/
+/* The MOb registers has no initial (defaul) value after RESET. */
+
+/* CANSTMOB - CAN MOb Status Register */
+
+/* DLCW: Data Length Code Warning*/
+/* The incoming message does not have DLC expected. */
+/* Whatever the frame type, the DLC field of CANCD-MOB register is updated by the recieved DLC */
+bool getDataLengthCodeWarning(){
+    return (CANSTMOB >> DLCW)&1;
+}
+
+/* TXOK: Transmit OK */
+/* This flag can generate an interrupt. It must be cleared */
+/* The communication enabled by transmission is completed. TxOK rises at the end of EOF field. When the controller
+is ready to send a frame, if two or more message objects are enabled as producers, the lower MOb index (0 to 14)
+is supplied first. */
+bool isTXOK(){
+    return (CANSTMOB >> TXOK)&1;
+}
+
+void clearTXOK(){
+    clear_bit(CANSTMOB, TXOK);
+}
+
+/* RXOK: Receive OK */
+/* This flag can generate an interrupt. It must be cleared */
+/* The communication enabled by reception is completed. RxOK rises at the end of the 6th bit of EOF field. In case of
+two or more message object reception hits, the lower MOb index (0 to 14) is updated first. */
+
+bool isRXOK(){
+    return (CANSTMOB >> RXOK)&1;
+}
+
+void clearRXOK(){
+    clear_bit(CANSTMOB, RXOK);
+}
+
+/* BERR: Bit Error (Only in Transmission) */
+/* This flag can generate an interrupt. It must be cleared */
+/* The bit value monitored is different from the bit value sent */
+/* Exceptions: the monitored recessive bit sent as a dominant bit during the arbitration field and the acknowledge slot
+detecting a dominant bit during the sending of an error frame. */
+bool isBitError(){
+    return (CANSTMOB >> BERR)&1;
+}
+
+void clearBitError(){
+    clear_bit(CANSTMOB, BERR);
+}
+
+
+/* SERR: Stuff Error */
+/* This flag can generate an interrupt. It must be cleared */
+/* Detection of more than five consecutive bits with the same polarity */
+
+bool isStuffError(){
+    return (CANSTMOB >> SERR)&1;
+}
+
+void clearStuffError(){
+    clear_bit(CANSTMOB, SERR);
+}
+
+
+/* CERR: CRC Error */
+/* This flag can generate an interrupt. It must be cleared */
+/* The receiver performs a CRC check on every de-stuffed received message from the start of frame up to the data
+field. If this checking does not match with the de-stuffed CRC field, a CRC error is set. */
+bool isCRCError(){
+    return (CANSTMOB >> CERR)&1;
+}
+
+void clearCRCError(){
+    clear_bit(CANSTMOB, CERR);
+}
+
+
+/* FERR: Form Error */
+/* This flag can generate an interrupt. It must be cleared */
+/* The form error results from one or more violations of the fixed form in the following bit fields: CRC delimiter, Acknowledgment delimiter, EOF */
+bool isFormError(){
+    return (CANSTMOB >> FERR)&1;
+}
+
+void clearFormError(){
+    clear_bit(CANSTMOB, FERR);
+}
+
+
+/* AERR: Acknowledgment Error */
+/* This flag can generate an interrupt. It must be cleared */
+/* No detection of the dominant bit in the acknowledge slot. */
+bool isAckError(){
+    return (CANSTMOB >> AERR);
+}
+
+void clearAckError(){
+    clear_bit(CANSTMOB, AERR);
+}
 
 //TODO: continue on high-level wrapper
