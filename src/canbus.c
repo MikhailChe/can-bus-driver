@@ -10,6 +10,7 @@
  * you can use it wherever and however you want until you remain copyrights
  *
  * Copyright 2013, Mikhail Chernoskutov
+ * <mikhail.chernoskutov@gmail.com>
  */
 
 /**CANGCON -- CAN General Control Register **/
@@ -466,7 +467,7 @@ uint8_t getIndex(){
 /* The incoming message does not have DLC expected. */
 /* Whatever the frame type, the DLC field of CANCD-MOB register is updated by the recieved DLC */
 bool getDataLengthCodeWarning(){
-    return (CANSTMOB >> DLCW)&1;
+    return get_bit(CANSTMOB, DLCW);
 }
 
 /* TXOK: Transmit OK */
@@ -475,7 +476,7 @@ bool getDataLengthCodeWarning(){
 is ready to send a frame, if two or more message objects are enabled as producers, the lower MOb index (0 to 14)
 is supplied first. */
 bool isTXOK(){
-    return (CANSTMOB >> TXOK)&1;
+    return get_bit(CANSTMOB, TXOK);
 }
 
 void clearTXOK(){
@@ -488,7 +489,7 @@ void clearTXOK(){
 two or more message object reception hits, the lower MOb index (0 to 14) is updated first. */
 
 bool isRXOK(){
-    return (CANSTMOB >> RXOK)&1;
+    return get_bit(CANSTMOB, RXOK);
 }
 
 void clearRXOK(){
@@ -501,7 +502,7 @@ void clearRXOK(){
 /* Exceptions: the monitored recessive bit sent as a dominant bit during the arbitration field and the acknowledge slot
 detecting a dominant bit during the sending of an error frame. */
 bool isBitError(){
-    return (CANSTMOB >> BERR)&1;
+    return get_bit(CANSTMOB, BERR);
 }
 
 void clearBitError(){
@@ -514,7 +515,7 @@ void clearBitError(){
 /* Detection of more than five consecutive bits with the same polarity */
 
 bool isStuffError(){
-    return (CANSTMOB >> SERR)&1;
+    return get_bit(CANSTMOB, SERR);
 }
 
 void clearStuffError(){
@@ -527,7 +528,7 @@ void clearStuffError(){
 /* The receiver performs a CRC check on every de-stuffed received message from the start of frame up to the data
 field. If this checking does not match with the de-stuffed CRC field, a CRC error is set. */
 bool isCRCError(){
-    return (CANSTMOB >> CERR)&1;
+    return get_bit(CANSTMOB, CERR);
 }
 
 void clearCRCError(){
@@ -539,7 +540,7 @@ void clearCRCError(){
 /* This flag can generate an interrupt. It must be cleared */
 /* The form error results from one or more violations of the fixed form in the following bit fields: CRC delimiter, Acknowledgment delimiter, EOF */
 bool isFormError(){
-    return (CANSTMOB >> FERR)&1;
+    return get_bit(CANSTMOB, FERR);
 }
 
 void clearFormError(){
@@ -551,11 +552,197 @@ void clearFormError(){
 /* This flag can generate an interrupt. It must be cleared */
 /* No detection of the dominant bit in the acknowledge slot. */
 bool isAckError(){
-    return (CANSTMOB >> AERR);
+    return get_bit(CANSTMOB, AERR);
 }
 
 void clearAckError(){
     clear_bit(CANSTMOB, AERR);
 }
 
-//TODO: continue on high-level wrapper
+
+
+/* CANCDMOB - CAN MOb Control and DLC Register */
+
+/* CONMOB: Configuration fo Message Object */
+/* These bits set the communication to be performed (no initial value after RESET).
+ * 00 - disable
+ * 01 - enable transmission
+ * 10 - enable reception
+ * 11 - enable frame buffer reception */
+uint8_t getMObConfig(){
+    return (CANCDMOB >> CONMOB0)&0b11;
+}
+
+void setMObConfig(uint8_t val){
+    if(val>= 0 && val <=0b11){
+        set_bits(CANCDMOB, 0b11, CONMOB0, val);
+    }
+}
+
+
+/* RPLV: Reply Valid */
+/* Used in the automatic reply mode after receiving a remote frame 
+ * 0 - reply not ready
+ * 1 - reply ready and valid */
+bool isReplyValid(){
+    return get_bit(CANCDMOB, RPLV);
+}
+
+
+/* IDE: Identifier Extension */
+/* IDE bit of the remote or data frame to send
+ * This bit is updated with the corresponding value of the remote or data frame recieved
+ * 0 - CAN standard rev 2.0 A (ID length = 11 bits)
+ * 1 - CAN standard rev 2.0 B (ID length = 29 bits) */
+bool getIDExt(){
+    return get_bit(CANCDMOB, IDE);
+}
+
+/* DLC[3:0]: Data Length Code */
+/* Number of Bytes in the field of the message.
+ * DLC field of the remote or data frame to send.
+ * The range of DLC is from 0 up to 8.
+ * If DLC field >8 then effective DLC=8
+ * 
+ * This field is updated with the corresponding value of the remote
+ * or data frame recieved. If the expected DLC differs from the incoming
+ * DLC, a DLC warning appears in CANSTMOB register */
+uint8_t getDLC(){
+    return (CANCDMOB >> DLC0)&0b1111;
+}
+
+
+
+/* CANIDT1, CANIDT2, CANIDT3 and CANIDT4 - CAN Identifier Tag Registers */
+
+/* RTRTAG: Remote Transmission Request Tag */
+/* RTR bit of the remote or data frame to send */
+bool isRTR(){
+    return (CANIDT4 >> RTRTAG)&1;
+}
+
+void setRTR(bool value){
+    if(value){
+        set_bit(CANIDT4, RTRTAG);
+    }else{
+        clear_bit(CANIDT4, RTRTAG);
+    }
+}
+
+/* RB1TAG: Reserved Bit 1 Tag - v2.0 part B only */
+bool isRB1(){
+    return (CANIDT4 >> RB1TAG)&1;
+}
+
+void setRB1(bool value){
+    if(value){
+        set_bit(CANIDT4, RB1TAG);
+    }else{
+        clear_bit(CANIDT4, RB1TAG);
+    }
+}
+
+/* RB0TAG: Reserved Bit 1 Tag - v2.0 part A and B*/
+bool isRB0(){
+    return (CANIDT4 >> RB0TAG)&1;
+}
+
+void setRB0(bool value){
+    if(value){
+        set_bit(CANIDT4, RB0TAG);
+    }else{
+        clear_bit(CANIDT4, RB0TAG);
+    }
+}
+
+unsigned long getIDTagB(){
+    return ( (unsigned long)((CANIDT4 >> IDT0)&0b11111) )|
+           ( ((unsigned long)CANIDT3)<<5 )|
+           ( ((unsigned long)CANIDT2)<<(5+8) )|
+           ( ((unsigned long)CANIDT1)<<(5+16) );
+}
+
+int getIDTagA(){
+    return ( (CANIDT2 >> 5)&0b111 ) | ( CANIDT1 << 3 );
+}
+
+void setIDTagB(unsigned long val){
+    set_bits(CANIDT4, 0x1F, IDT0, val);
+    set_bits(CANIDT3, 0xFF, 0, val >> 5);
+    set_bits(CANIDT2, 0xFF, 0, val >> (5+8));
+    set_bits(CANIDT1, 0xFF, 0, val >> (5+16));
+}
+
+void setIDTagA(unsigned int val){
+    set_bits(CANIDT2, 0x7, 5, val);
+    set_bits(CANIDT1, 0xFF, 0, val >> 3);
+}
+
+
+
+/* CANIDM1, CANIDM2, CANIDM3 and CANIDM4 - CAN Identifier Mask Registers */
+
+/* IDEMSK: Identifier Extension Mask
+ * 0 - comparison true forced
+ * 1 - bit comparison enabled */
+bool isIDExtMask(){
+    return (CANIDM4 >> IDEMSK)&1;
+}
+void setIDExtMas(bool value){
+    if(value){
+        set_bit(CANIDM4, IDEMSK);
+    }else{
+        clear_bit(CANIDM4, IDEMSK);
+    }
+}
+
+/* RTRMSK: Remote Transmission Request Mask
+ * 0 - comparison true forced
+ * 1 - bit comparison enabled */
+bool isRTRMask(){
+    return (CANIDM4 >> RTRMSK)&1;
+}
+void setRTRMask(bool value){
+    if(value){
+        set_bit(CANIDM4, RTRMSK);
+    }else{
+        clear_bit(CANIDM4, RTRMSK);
+    }
+}
+
+unsigned long getIDMaskB(){
+    return ( (unsigned long)((CANIDM4 >> IDMSK0)&0b11111) )|
+           ( ((unsigned long)CANIDM3)<<5 )|
+           ( ((unsigned long)CANIDM2)<<(5+8) )|
+           ( ((unsigned long)CANIDM1)<<(5+16) );
+}
+
+int getIDMaskA(){
+    return ( (CANIDM2 >> 5)&0b111 ) | ( CANIDM1 << 3 );
+}
+
+void setIDMaskB(unsigned long val){
+    set_bits(CANIDM4, 0x1F, IDMSK0, val);
+    set_bits(CANIDM3, 0xFF, 0, val >> 5);
+    set_bits(CANIDM2, 0xFF, 0, val >> (5+8));
+    set_bits(CANIDM1, 0xFF, 0, val >> (5+16));
+}
+
+void setIDMaskA(unsigned int val){
+    set_bits(CANIDM2, 0x7, 5, val);
+    set_bits(CANIDM1, 0xFF, 0, val >> 3);
+}
+
+
+
+/* CANSTML and CANSTMH - CAN Time Stamp Registers */
+unsigned int getCANTimeStamp(){
+    return (CANSTML)|( ((unsigned int)CANSTMH)<<8 );
+}
+
+
+/* CANMSG - CAN Data Message Register */
+/* This register contains the CAN data byte pointed at the page MOb register. */
+uint8_t getCANMessageData(){
+    return CANMSG;
+}
